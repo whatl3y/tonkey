@@ -1,5 +1,15 @@
 .DS_Store
 .vscode
 .env
+.env.local
+.env.*.local
 node_modules
 dist
+
+# Claude Code ephemeral / per-machine state
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# Local npm pack outputs
+*.tgz
+*.log

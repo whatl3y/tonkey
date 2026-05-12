@@ -1,0 +1,36 @@
+# Source — consumers get compiled dist/ instead
+src/
+scripts/
+tsconfig.json
+
+# Local agent / IDE / OS state
+.claude/
+.vscode/
+.idea/
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dev-only files that don't ship
+.gitignore
+.npmignore
+.editorconfig
+.prettierrc*
+.eslintrc*
+.github/
+
+# Logs and temp
+*.log
+*.tgz
+npm-debug.log*
+
+# Tests (none yet, but if/when added these stay local)
+*.spec.ts
+*.spec.js
+*.test.ts
+*.test.js
+__tests__/
+coverage/
