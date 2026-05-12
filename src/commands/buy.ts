@@ -168,7 +168,7 @@ export default function BuyCommand(client: TonClient): ICommand {
         `Swap submitted (seqno ${res.oldSeqno} → ${res.newSeqno}). Expected out: ${res.expectedOut.toString()}; floor: ${res.minimumOut.toString()}.`,
       );
       Vomit.singleLine(
-        "Note: the swap can take 10-60s to fully settle through router → pool → jetton transfer hops. Re-run `tond balance -t <jettonMaster>` shortly to confirm.",
+        "Note: the swap can take 10-60s to fully settle through router → pool → jetton transfer hops. Re-run `tonx balance -t <jettonMaster>` shortly to confirm.",
         0,
       );
       await BalanceCommand(client).runCli(

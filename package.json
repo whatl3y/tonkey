@@ -1,5 +1,5 @@
 {
-  "name": "ton-cli",
+  "name": "tonx",
   "version": "0.0.1",
   "description": "CLI wallet for the TON blockchain: review balances and transfer TON / Jettons.",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/moontography/ton-cli"
   },
   "bin": {
-    "tond": "dist/index.js"
+    "tonx": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

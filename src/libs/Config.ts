@@ -7,9 +7,9 @@ const fileMgmt = FileManagement();
 
 const homeDir =
   process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"];
-assert(homeDir, "home directory was not found to store ton-cli configuration.");
+assert(homeDir, "home directory was not found to store tonx configuration.");
 
-const confDir = path.join(homeDir, ".ton-cli");
+const confDir = path.join(homeDir, ".tonx");
 const confFile = path.join(confDir, "config.json");
 
 const DEFAULT_ENDPOINTS: Record<TonNetwork, string> = {
