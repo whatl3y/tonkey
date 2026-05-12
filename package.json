@@ -1,0 +1,46 @@
+{
+  "name": "ton-cli",
+  "version": "0.0.1",
+  "description": "CLI wallet for the TON blockchain: review balances and transfer TON / Jettons.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/moontography/ton-cli"
+  },
+  "bin": {
+    "tond": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublish": "npm run build",
+    "audit:deps": "ts-node scripts/audit-deps.ts",
+    "test": "mocha --require ts-node/register --recursive './src/**/*.spec.ts'"
+  },
+  "author": "Lance Whatley <lance@moontography.com>",
+  "license": "MIT",
+  "overrides": {
+    "@ton/core": "0.62.1",
+    "@ton/ton": "15.4.0"
+  },
+  "dependencies": {
+    "@ton/core": "0.62.1",
+    "@ton/crypto": "3.3.0",
+    "@ton/ton": "15.4.0",
+    "@toncodex/sdk": "1.0.43-mainnet",
+    "axios": "1.12.2",
+    "bignumber.js": "9.1.2",
+    "columnify": "1.6.0",
+    "commander": "11.1.0",
+    "dotenv": "16.4.5",
+    "inquirer": "8.2.5",
+    "jsbi": "3.2.5"
+  },
+  "devDependencies": {
+    "@types/columnify": "1.5.1",
+    "@types/inquirer": "8.2.6",
+    "@types/mocha": "10.0.6",
+    "@types/node": "20.11.30",
+    "mocha": "10.2.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.4.5"
+  }
+}
