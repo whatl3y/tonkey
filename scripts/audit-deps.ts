@@ -128,7 +128,7 @@ function checkRegistry(name: string, version: string): Promise<RegistryReport> {
         path,
         headers: {
           accept: "application/vnd.npm.install-v1+json",
-          "user-agent": "tonx-audit/0.0.1",
+          "user-agent": "tonkey-audit/0.0.1",
         },
         timeout: 15_000,
       },

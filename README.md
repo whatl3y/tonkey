@@ -1,11 +1,11 @@
-# tonx
+# tonkey
 
 A CLI wallet for the TON blockchain. Review balances and transfer TON / Jettons from the terminal.
 
 ## Install
 
 ```sh
-$ npm install -g tonx
+$ npm install -g tonkey
 ```
 
 Or run locally from source:
@@ -21,15 +21,15 @@ $ ./dist/index.js --help
 
 | Command | What it does |
 |---|---|
-| `tonx seed` | Generate a fresh 24-word TON mnemonic. |
-| `tonx address` | Show the bounceable / non-bounceable / raw forms of a wallet. |
-| `tonx config` | Interactive config (network, RPC, wallet source, wallet version). |
-| `tonx balance [-t <jettonMaster>]` | Native TON (and optional Jetton) balances across all loaded wallets. |
-| `tonx transfer -f <from> -t <to> [--token <jettonMaster>] [-a <amount>]` | Send TON or a Jetton. |
+| `tonkey seed` | Generate a fresh 24-word TON mnemonic. |
+| `tonkey address` | Show the bounceable / non-bounceable / raw forms of a wallet. |
+| `tonkey config` | Interactive config (network, RPC, wallet source, wallet version). |
+| `tonkey balance [-t <jettonMaster>]` | Native TON (and optional Jetton) balances across all loaded wallets. |
+| `tonkey transfer -f <from> -t <to> [--token <jettonMaster>] [-a <amount>]` | Send TON or a Jetton. |
 
 ## Wallet versions
 
-By default `tonx` derives **W5 (V5R1)** addresses. To work with legacy V4R2 funds, run `tonx config` and change `walletVersion` to `v4`, or pass `--version v4` to commands that take a wallet selector.
+By default `tonkey` derives **W5 (V5R1)** addresses. To work with legacy V4R2 funds, run `tonkey config` and change `walletVersion` to `v4`, or pass `--version v4` to commands that take a wallet selector.
 
 The same private key derives a **different** address per contract version — `EQ...(v5)` and `EQ...(v4)` are two distinct on-chain accounts.
 
