@@ -1,20 +1,15 @@
 import assert from "assert";
 import BigNumber from "bignumber.js";
 import inquirer from "inquirer";
-import {
-  Address,
-  beginCell,
-  internal,
-  SendMode,
-  toNano,
-} from "@ton/core";
+import { Address, internal, SendMode, toNano } from "@ton/core";
 import { TonClient } from "@ton/ton";
 import {
-  buildSwapMessage,
-  findPool,
-  quoteExactIn,
-} from "../libs/Tonco";
-import { getJettonInfo, getJettonWalletAddress } from "../libs/Jetton";
+  ALL_DEX_NAMES,
+  DexName,
+  IBestQuoteResult,
+  defaultDexRouter,
+} from "../libs/dex";
+import { getJettonInfo } from "../libs/Jetton";
 import { sleep } from "../libs/Helpers";
 import {
   selectAccount,
@@ -32,7 +27,7 @@ export default function BuyCommand(client: TonClient): ICommand {
     name: "buy",
 
     help() {
-      return "Buy a Jetton with TON via the TONCO DEX (concentrated-liquidity AMM).";
+      return "Buy a Jetton with TON, routed across supported DEXs to the best output (currently TONCO and STON.fi v2).";
     },
 
     options(): ICommandOption[] {
@@ -56,6 +51,11 @@ export default function BuyCommand(client: TonClient): ICommand {
           flag: "-s, --slippage <bps>",
           desc: `Slippage tolerance in basis points (default ${DEFAULT_SLIPPAGE_BPS} = 0.5%).`,
           default: String(DEFAULT_SLIPPAGE_BPS),
+        },
+        {
+          flag: "-d, --dex <name>",
+          desc: `Restrict routing to a DEX. "auto" (default) compares all supported DEXs and picks the best output. Supported: auto | ${ALL_DEX_NAMES.join(" | ")}.`,
+          default: "auto",
         },
         {
           flag: "-y, --yes",
@@ -82,21 +82,29 @@ export default function BuyCommand(client: TonClient): ICommand {
       assert(amountIn > 0n, "amount must be > 0");
 
       const from = selectAccount(accounts, options.from);
-
-      // Auto-detect jetton decimals/symbol from the token's content cell.
-      // Refuses to proceed if decimals can't be determined — using the wrong
-      // scale would corrupt the entire trade.
-      const jettonInfo = await getJettonInfo(client, options.token);
-      const decimals = jettonInfo.decimals;
-      const symbol = jettonInfo.symbol || "JTON";
-
-      const pool = await findPool(client, options.token, "buy");
-      const quote = await quoteExactIn(client, pool, amountIn, slippageBps, "buy");
-
       const fromAddr = Address.parse(from.address);
-      const message = buildSwapMessage({
+
+      const jettonInfo = await getJettonInfo(client, options.token);
+      const symbol = jettonInfo.symbol || "JTON";
+      const decimals = jettonInfo.decimals;
+
+      const router = defaultDexRouter(client, _config.network);
+      const only = parseDexFilter(options.dex, router.registeredNames());
+      const result = await router.bestQuote({
+        client,
+        jettonMaster: options.token,
+        amountIn,
+        direction: "buy",
+        slippageBps,
+        decimals,
+        only,
+      });
+      const quote = result.best;
+
+      const message = await router.getDex(quote.dex).buildSwapMessage({
+        client,
         quote,
-        recipient: fromAddr,
+        senderAddress: fromAddr,
       });
 
       if (!options.yes) {
@@ -115,14 +123,13 @@ export default function BuyCommand(client: TonClient): ICommand {
             .div(new BigNumber(10).pow(decimals))
             .toFormat(),
           slippageBps,
-          poolAddress: pool.poolAddress.toString({
-            urlSafe: true,
-            bounceable: true,
-          }),
+          quotesTable: renderQuotesTable(result, decimals, "buy"),
+          poolAddress: quote.poolAddress,
           gasAttachedTon: new BigNumber(message.value.toString())
             .minus(amountIn.toString())
             .div(1e9)
             .toFormat(),
+          dex: quote.dex,
         });
       }
 
@@ -153,8 +160,10 @@ export default function BuyCommand(client: TonClient): ICommand {
       return {
         oldSeqno: seqno,
         newSeqno,
+        dex: quote.dex,
         expectedOut: quote.expectedOut,
         minimumOut: quote.minimumOut,
+        attempts: result.attempts,
       };
     },
 
@@ -165,7 +174,7 @@ export default function BuyCommand(client: TonClient): ICommand {
     ) {
       const res = await this.execute(config, options, accounts);
       Vomit.singleLine(
-        `Swap submitted (seqno ${res.oldSeqno} → ${res.newSeqno}). Expected out: ${res.expectedOut.toString()}; floor: ${res.minimumOut.toString()}.`,
+        `Swap submitted via ${res.dex} (seqno ${res.oldSeqno} → ${res.newSeqno}). Expected out: ${res.expectedOut.toString()}; floor: ${res.minimumOut.toString()}.`,
       );
       Vomit.singleLine(
         "Note: the swap can take 10-60s to fully settle through router → pool → jetton transfer hops. Re-run `tonkey balance -t <jettonMaster>` shortly to confirm.",
@@ -178,6 +187,48 @@ export default function BuyCommand(client: TonClient): ICommand {
       );
     },
   };
+}
+
+function parseDexFilter(
+  raw: any,
+  registered: DexName[],
+): DexName[] | undefined {
+  if (raw == null) return undefined;
+  const s = String(raw).trim().toLowerCase();
+  if (!s || s === "auto" || s === "all") return undefined;
+  const candidates = s.split(",").map((p) => p.trim()) as DexName[];
+  for (const c of candidates) {
+    if (!registered.includes(c)) {
+      throw new Error(
+        `Unknown --dex value "${c}". Supported: auto | ${registered.join(" | ")}.`,
+      );
+    }
+  }
+  return candidates;
+}
+
+function renderQuotesTable(
+  result: IBestQuoteResult,
+  outDecimals: number,
+  direction: "buy" | "sell",
+): string {
+  const outScale = direction === "buy" ? outDecimals : 9; // sell outputs TON
+  const lines: string[] = [];
+  for (const a of result.attempts) {
+    const winner = a.quote === result.best ? " *" : "  ";
+    if (!a.quote) {
+      lines.push(`${winner} ${a.dex.padEnd(10)}  —             (${a.reason})`);
+      continue;
+    }
+    const out = new BigNumber(a.quote.expectedOut.toString())
+      .div(new BigNumber(10).pow(outScale))
+      .toFormat();
+    const pool = a.quote.poolAddress.slice(0, 12) + "…";
+    lines.push(
+      `${winner} ${a.dex.padEnd(10)}  expected out: ${out}  pool: ${pool}`,
+    );
+  }
+  return lines.join("\n");
 }
 
 function assertSlippage(bps: number, force: boolean) {
@@ -201,20 +252,25 @@ interface IConfirmArgs {
   outExpectedHuman: string;
   outMinHuman: string;
   slippageBps: number;
+  quotesTable: string;
   poolAddress: string;
   gasAttachedTon: string;
+  dex: DexName;
 }
 
 async function confirmOrAbort(args: IConfirmArgs) {
   Vomit.singleLine(
     `
-${args.action}
+${args.action} via ${args.dex.toUpperCase()}
   from:           ${args.fromFriendly}
   spend:          ${args.inAmountHuman} ${args.inLabel}
   expected out:   ${args.outExpectedHuman} ${args.outLabel}
   minimum out:    ${args.outMinHuman} ${args.outLabel} (slippage ${args.slippageBps} bps)
   pool:           ${args.poolAddress}
   TON gas attach: ${args.gasAttachedTon} TON
+
+  quotes (* = chosen):
+${args.quotesTable}
 `,
     0,
   );
@@ -247,7 +303,3 @@ async function waitForSeqno(
   }
   throw new Error("Timed out waiting for seqno to advance after swap submit.");
 }
-
-// Suppress unused-import warnings — kept available for composition.
-void beginCell;
-void getJettonWalletAddress;

@@ -4,7 +4,6 @@ export type WalletSource = "env" | "mnemonic" | "hide";
 
 export interface IConfig {
   network: TonNetwork;
-  endpoint?: string;
   apiKey?: string;
   walletSource: WalletSource;
   walletVersion: WalletVersion;

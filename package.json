@@ -22,6 +22,8 @@
     "@ton/ton": "15.4.0"
   },
   "dependencies": {
+    "@ston-fi/api": "^0.32.0",
+    "@ston-fi/sdk": "^2.7.0",
     "@ton/core": "0.62.1",
     "@ton/crypto": "3.3.0",
     "@ton/ton": "15.4.0",

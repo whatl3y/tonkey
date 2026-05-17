@@ -86,7 +86,8 @@ export default function BalanceCommand(client: TonClient): ICommand {
           const baseRow: Record<string, any> = {
             idx: r.account.idx,
             version: r.account.version,
-            address: r.account.friendly,
+            address: r.account.friendlyNonBounce,
+            bounceAddy: r.account.friendly,
             TON: native.toFormat(4),
           };
 

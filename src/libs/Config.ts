@@ -55,7 +55,6 @@ export default {
     assert(typeof raw === "string", "config should be a string");
     const parsed = JSON.parse(raw);
     const merged: IConfig = { ...DEFAULTS, ...parsed };
-    if (!merged.endpoint) merged.endpoint = defaultEndpoint(merged.network);
     if (!merged.apiKey && process.env.TONCENTER_API_KEY) {
       merged.apiKey = process.env.TONCENTER_API_KEY;
     }

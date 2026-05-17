@@ -1,5 +1,5 @@
 import inquirer from "inquirer";
-import Config, { defaultEndpoint } from "../libs/Config";
+import Config from "../libs/Config";
 import Vomit from "../libs/Vomit";
 import { ICommand, IConfig, TonNetwork, WalletVersion } from "../types";
 
@@ -8,7 +8,7 @@ export default function ConfigCommand(): ICommand {
     name: "config",
 
     help() {
-      return "Configure the CLI (network, endpoint, wallet source, wallet version).";
+      return "Configure the CLI (network, wallet source, wallet version).";
     },
 
     async execute(currentConfig: IConfig) {
@@ -22,13 +22,6 @@ export default function ConfigCommand(): ICommand {
             { name: "Mainnet", value: "mainnet" as TonNetwork },
             { name: "Testnet", value: "testnet" as TonNetwork },
           ],
-        },
-        {
-          name: "endpoint",
-          message: "RPC endpoint (TonCenter JSON-RPC URL):",
-          type: "input",
-          default: (a: any) =>
-            currentConfig.endpoint || defaultEndpoint(a.network),
         },
         {
           name: "apiKey",
@@ -86,7 +79,6 @@ export default function ConfigCommand(): ICommand {
 
       const next: IConfig = {
         network: answers.network,
-        endpoint: answers.endpoint || undefined,
         apiKey: answers.apiKey || undefined,
         walletVersion: answers.walletVersion,
         walletSource: answers.walletSource,
