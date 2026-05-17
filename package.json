@@ -1,6 +1,6 @@
 {
   "name": "tonkey",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "CLI wallet for the TON blockchain: review balances and transfer TON / Jettons.",
   "repository": {
     "type": "git",
